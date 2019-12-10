@@ -33,7 +33,6 @@ func main() {
 		part2 = append(part2, output)
 	}
 	fmt.Println("Part 2", part2)
-
 }
 
 func runProgram(initialMemory Memory, input <-chan int, output chan<- int) {
