@@ -1,0 +1,17 @@
+L,12,L,10,R,8,L,12,R,8,R,10,R,12,L,12,L,10,R,8,L,12,R,8,R,10,R,12,L,10,R,12,R,8,L,10,R,12,R,8,R,8,R,10,R,12,L,12,L,10,R,8,L,12,R,8,R,10,R,12,L,10,R,12,R,8
+
+Can be simplified to
+
+A=L,12,L,10,R,8,L,12,R,8,R,10,R,12
+B=L,10,R,12,R,8
+C=R,8,R,10,R,12
+
+A,A,B,B,C,A,B
+
+Since A is too long, it can be rearranged such that
+
+A=L,12,L,10,R,8,L,12
+B=L,10,R,12,R,8
+C=R,8,R,10,R,12
+
+A,C,A,C,B,B,C,A,C,B
