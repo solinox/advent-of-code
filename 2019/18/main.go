@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"sync"
 )
 
@@ -30,22 +31,26 @@ type Door struct {
 type Maze struct {
 	Steps   int
 	Grid    map[Point]byte
-	Current Point
+	Current []Point
 	Keys    map[Point]*Key
 	Doors   map[Point]*Door
 }
 
 func main() {
-	maze := parseInput("input.txt")
-
 	// Part 1
-	part1 := dijkstra(maze)
+	maze1 := parseInput("part1.txt")
+	part1 := dijkstra(maze1)
 	fmt.Println("Part 1:", part1)
+
+	// Part 2
+	maze2 := parseInput("part2.txt")
+	part2 := dijkstra(maze2)
+	fmt.Println("Part 2:", part2)
 }
 
 type State struct {
 	Steps         int
-	Position      Point
+	Position      []Point
 	KeysCollected []*Key
 }
 
@@ -53,7 +58,7 @@ func dijkstra(maze *Maze) int {
 	var tiles sync.Map
 	start := State{Steps: 0, Position: maze.Current, KeysCollected: make([]*Key, 0)}
 
-	tiles.Store(start.Position, start)
+	tiles.Store(hash(start.Position), start)
 	minSteps := -1
 	var mu sync.Mutex
 	var walk func(current State, wg *sync.WaitGroup, depth int)
@@ -67,49 +72,54 @@ func dijkstra(maze *Maze) int {
 		}
 		mu.Unlock()
 		// find closest available keys
-		availableKeys := maze.ClosestKeys(current)
-		// fmt.Println(strings.Repeat("  ", depth), current, availableKeys)
-		// if found all the keys, check if distance is minimum seen
-		if len(availableKeys) == 0 && len(current.KeysCollected) == len(maze.Keys) {
-			mu.Lock()
-			// fmt.Println("Solved:", current.Steps, current.KeysCollected)
-			if minSteps < 0 || current.Steps < minSteps {
-				minSteps = current.Steps
+		allAvailableKeys := maze.ClosestKeys(current)
+		for i, availableKeys := range allAvailableKeys {
+			// fmt.Println(strings.Repeat("  ", depth), current, availableKeys)
+			// if found all the keys, check if distance is minimum seen
+			if len(availableKeys) == 0 && len(current.KeysCollected) == len(maze.Keys) {
+				mu.Lock()
+				// fmt.Println("Solved:", current.Steps, current.KeysCollected)
+				if minSteps < 0 || current.Steps < minSteps {
+					minSteps = current.Steps
+				}
+				mu.Unlock()
+				return
 			}
-			mu.Unlock()
-			return
-		}
-		var newWg sync.WaitGroup
-		// time.Sleep(1 * time.Second)
-		for key, dist := range availableKeys {
-			newSteps := current.Steps + dist
-			newKeysCollected := make([]*Key, len(current.KeysCollected)+1)
-			copy(newKeysCollected, current.KeysCollected)
-			newKeysCollected[len(current.KeysCollected)] = key
-			newState := State{Steps: newSteps, Position: key.Position, KeysCollected: newKeysCollected}
-			// kill this branch if we've already previously found a better path
-			if states, ok := tiles.Load(key.Position); ok {
-				skip := false
-				_states := states.([]State)
-				for _, state := range _states {
-					if state.Steps <= newSteps && key == state.KeysCollected[len(state.KeysCollected)-1] && containsAllKeys(newKeysCollected, state.KeysCollected) {
-						// fmt.Println(strings.Repeat("  ", depth), "skipping", state, newState)
-						skip = true
-						break
+			var newWg sync.WaitGroup
+			for key, dist := range availableKeys {
+				newSteps := current.Steps + dist
+				newPosition := make([]Point, len(current.Position))
+				copy(newPosition, current.Position)
+				newPosition[i] = key.Position
+				newKeysCollected := make([]*Key, len(current.KeysCollected)+1)
+				copy(newKeysCollected, current.KeysCollected)
+				newKeysCollected[len(current.KeysCollected)] = key
+
+				newState := State{Steps: newSteps, Position: newPosition, KeysCollected: newKeysCollected}
+				// kill this branch if we've already previously found a better path
+				if states, ok := tiles.Load(hash(newPosition)); ok {
+					skip := false
+					_states := states.([]State)
+					for _, state := range _states {
+						if state.Steps <= newSteps && key == state.KeysCollected[len(state.KeysCollected)-1] && containsAllKeys(newKeysCollected, state.KeysCollected) {
+							// fmt.Println(strings.Repeat("  ", depth), "skipping", state, newState)
+							skip = true
+							break
+						}
 					}
+					if skip {
+						continue
+					}
+					_states = append(_states, newState)
+					tiles.Store(hash(newPosition), _states)
+				} else {
+					tiles.Store(hash(newPosition), []State{newState})
 				}
-				if skip {
-					continue
-				}
-				_states = append(_states, newState)
-				tiles.Store(key.Position, _states)
-			} else {
-				tiles.Store(key.Position, []State{newState})
+				newWg.Add(1)
+				go walk(newState, &newWg, depth+1)
 			}
-			newWg.Add(1)
-			go walk(newState, &newWg, depth+1)
+			newWg.Wait()
 		}
-		newWg.Wait()
 	}
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -118,17 +128,15 @@ func dijkstra(maze *Maze) int {
 	return minSteps
 }
 
-func (maze *Maze) ClosestKeys(state State) map[*Key]int {
-	keys := make(map[*Key]int)
+func (maze *Maze) ClosestKeys(state State) []map[*Key]int {
+	allKeys := make([]map[*Key]int, len(state.Position))
+	tiles := make(map[Point]State)
 	// Find all keys within accessible area
 	// dijkstra again
-	tiles := make(map[Point]State)
-	start := State{Steps: 0, Position: state.Position}
-	tiles[start.Position] = start
-	var walk func(current State, from Point)
-	walk = func(current State, from Point) {
+	var walk func(current State, from Point, keys map[*Key]int)
+	walk = func(current State, from Point, keys map[*Key]int) {
 		// if on a key
-		if key, ok := maze.Keys[current.Position]; ok {
+		if key, ok := maze.Keys[current.Position[0]]; ok {
 			// if we haven't collected the key
 			collected := false
 			for _, collectedKey := range state.KeysCollected {
@@ -144,10 +152,10 @@ func (maze *Maze) ClosestKeys(state State) map[*Key]int {
 		}
 		// check all directions
 		dirs := []Point{
-			Point{current.Position.X, current.Position.Y + 1}, // up
-			Point{current.Position.X, current.Position.Y - 1}, // down
-			Point{current.Position.X - 1, current.Position.Y}, // left
-			Point{current.Position.X + 1, current.Position.Y}, // right
+			Point{current.Position[0].X, current.Position[0].Y + 1}, // up
+			Point{current.Position[0].X, current.Position[0].Y - 1}, // down
+			Point{current.Position[0].X - 1, current.Position[0].Y}, // left
+			Point{current.Position[0].X + 1, current.Position[0].Y}, // right
 		}
 		for _, dir := range dirs {
 			// if just came from this direction
@@ -166,14 +174,22 @@ func (maze *Maze) ClosestKeys(state State) map[*Key]int {
 			if next, ok := tiles[dir]; ok && next.Steps <= newSteps {
 				continue
 			}
-			newState := State{Steps: newSteps, Position: dir}
-			tiles[newState.Position] = newState
+			newState := State{Steps: newSteps, Position: []Point{dir}}
+			tiles[newState.Position[0]] = newState
 
-			walk(newState, current.Position)
+			walk(newState, current.Position[0], keys)
 		}
 	}
-	walk(start, start.Position)
-	return keys
+
+	for i := range allKeys {
+		start := State{Steps: 0, Position: state.Position[i : i+1]}
+		tiles[start.Position[0]] = start
+		keys := make(map[*Key]int)
+		walk(start, start.Position[0], keys)
+		allKeys[i] = keys
+	}
+
+	return allKeys
 }
 
 func haveKeyForDoor(doorLetter byte, keysCollected []*Key) bool {
@@ -201,10 +217,18 @@ func containsAllKeys(keys, otherKeys []*Key) bool {
 	return true
 }
 
+func hash(pts []Point) string {
+	str := ""
+	for i := range pts {
+		str += strconv.Itoa(pts[i].X) + strconv.Itoa(pts[i].Y)
+	}
+	return str
+}
+
 func parseInput(filename string) *Maze {
 	file, _ := os.Open(filename)
 	scanner := bufio.NewScanner(file)
-	maze := &Maze{Grid: make(map[Point]byte), Keys: make(map[Point]*Key), Doors: make(map[Point]*Door)}
+	maze := &Maze{Grid: make(map[Point]byte), Keys: make(map[Point]*Key), Doors: make(map[Point]*Door), Current: make([]Point, 0)}
 	for y := 0; scanner.Scan(); y++ {
 		line := scanner.Text()
 		for x := range line {
@@ -214,7 +238,7 @@ func parseInput(filename string) *Maze {
 			if b == '#' {
 			} else if b == '.' {
 			} else if b == '@' {
-				maze.Current = pt
+				maze.Current = append(maze.Current, pt)
 				continue
 			} else if b >= 'a' && b <= 'z' {
 				maze.Keys[pt] = &Key{Position: pt, Letter: b}
