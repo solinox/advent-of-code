@@ -29,3 +29,12 @@ func IntSlice(r io.Reader) []int {
 	}
 	return slice
 }
+
+func StringSlice(r io.Reader) []string {
+	scanner := bufio.NewScanner(r)
+	slice := make([]string, 0)
+	for scanner.Scan() {
+		slice = append(slice, scanner.Text())
+	}
+	return slice
+}
