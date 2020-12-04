@@ -2,19 +2,19 @@ package input
 
 import (
 	"bufio"
-	"bytes"
 	"io"
+	"io/ioutil"
 	"log"
-	"os"
 	"strconv"
+	"strings"
 )
 
-func File(filename string) *os.File {
-	file, err := os.Open(filename)
+func ReadAll(r io.Reader) []byte {
+	data, err := ioutil.ReadAll(r)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return file
+	return data
 }
 
 func IntSlice(r io.Reader) []int {
@@ -49,41 +49,7 @@ func BytesSlice(r io.Reader) [][]byte {
 	return slice
 }
 
-func ScanDelim(r io.Reader, delim []byte) (<-chan string, <-chan string) {
-	ch1, ch2 := make(chan string), make(chan string)
-	scanner := bufio.NewScanner(r)
-	// copied and tweaked from bufio.ScanLines
-	split := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		if atEOF && len(data) == 0 {
-			return 0, nil, nil
-		}
-		if i := bytes.Index(data, delim); i >= 0 {
-			// We have a full newline-terminated line.
-			return i + 1, dropCR(data[0:i]), nil
-		}
-		// If we're at EOF, we have a final, non-terminated line. Return it.
-		if atEOF {
-			return len(data), dropCR(data), nil
-		}
-		// Request more data.
-		return 0, nil, nil
-	}
-	scanner.Split(split)
-	go func() {
-		for scanner.Scan() {
-			ch1 <- scanner.Text()
-			ch2 <- scanner.Text()
-		}
-		close(ch1)
-		close(ch2)
-	}()
-	return ch1, ch2
-}
-
-// dropCR drops a terminal \r from the data.
-func dropCR(data []byte) []byte {
-	if len(data) > 0 && data[len(data)-1] == '\r' {
-		return data[0 : len(data)-1]
-	}
-	return data
+func SplitString(r io.Reader, sep string) []string {
+	data := string(ReadAll(r))
+	return strings.Split(data, sep)
 }
