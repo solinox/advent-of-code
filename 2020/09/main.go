@@ -20,15 +20,20 @@ func main() {
 }
 
 func part1(xmas []int) int {
-	preambleSums := preamble(xmas, 25)
+	n, _ := weakspot(xmas, 25)
+	return n
+}
+
+func weakspot(xmas []int, preambleLen int) (int, int) {
+	preambleSums := preamble(xmas, preambleLen)
 	for i := 25; i < len(xmas); i++ {
 		if preambleSums[xmas[i]] == 0 {
-			return xmas[i]
+			return xmas[i], i
 		}
-		preambleSums = next(xmas, 25, i, preambleSums)
+		preambleSums = next(xmas, preambleLen, i, preambleSums)
 	}
 	log.Fatalln("Not found")
-	return 0
+	return 0, 0
 }
 
 func preamble(xmas []int, preambleLen int) map[int]int {
@@ -61,10 +66,10 @@ func next(xmas []int, preambleLen, index int, preambleSums map[int]int) map[int]
 }
 
 func part2(xmas []int) int {
-	n := part1(xmas)
+	n, maxI := weakspot(xmas, 25)
 OUTER:
-	for i := 0; i < len(xmas); i++ {
-		for j := i + 2; j <= len(xmas); j++ {
+	for i := maxI - 2; i >= 0; i-- {
+		for j := i + 2; j <= maxI; j++ {
 			if m := sliceutils.Sum(xmas[i:j]); m > n {
 				continue OUTER
 			} else if m == n {
