@@ -2,6 +2,7 @@ package input
 
 import (
 	"bufio"
+	"bytes"
 	"io"
 	"io/ioutil"
 	"log"
@@ -52,4 +53,23 @@ func BytesSlice(r io.Reader) [][]byte {
 func SplitString(r io.Reader, sep string) []string {
 	data := string(ReadAll(r))
 	return strings.Split(data, sep)
+}
+
+func IntMap(r io.Reader) map[int]int {
+	scanner := bufio.NewScanner(r)
+	m := make(map[int]int)
+	for scanner.Scan() {
+		line := scanner.Text()
+		n, err := strconv.Atoi(line)
+		if err != nil {
+			log.Fatal(line, err)
+		}
+		m[n]++
+	}
+	return m
+}
+
+func Duplicate(r io.Reader) (io.Reader, io.Reader) {
+	data := ReadAll(r)
+	return bytes.NewReader(data), bytes.NewReader(data)
 }
