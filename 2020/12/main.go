@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/solinox/advent-of-code/2020/pkg/input"
+	"github.com/solinox/advent-of-code/2020/pkg/intmath"
 )
 
 func main() {
@@ -33,7 +34,7 @@ func part1(instructions []string) int {
 	for _, instruction := range instructions {
 		ferry = ferry.Do(instruction, false)
 	}
-	return abs(ferry.Position.X) + abs(ferry.Position.Y)
+	return intmath.Abs(ferry.Position.X) + intmath.Abs(ferry.Position.Y)
 }
 
 func part2(instructions []string) int {
@@ -41,7 +42,7 @@ func part2(instructions []string) int {
 	for _, instruction := range instructions {
 		ferry = ferry.Do(instruction, true)
 	}
-	return abs(ferry.Position.X) + abs(ferry.Position.Y)
+	return intmath.Abs(ferry.Position.X) + intmath.Abs(ferry.Position.Y)
 }
 
 func (v vessel) Do(instruction string, part2 bool) vessel {
@@ -94,11 +95,4 @@ func (v vessel) Do(instruction string, part2 bool) vessel {
 		log.Fatalln("unsupported command", command)
 	}
 	return v
-}
-
-func abs(n int) int {
-	if n < 0 {
-		return -n
-	}
-	return n
 }
