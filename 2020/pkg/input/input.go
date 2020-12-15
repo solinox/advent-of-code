@@ -32,6 +32,20 @@ func IntSlice(r io.Reader) []int {
 	return slice
 }
 
+func SplitInt(r io.Reader, sep string) []int {
+	data := string(ReadAll(r))
+	dataSlice := strings.Split(data, sep)
+	slice := make([]int, len(dataSlice))
+	for i := range dataSlice {
+		n, err := strconv.Atoi(dataSlice[i])
+		if err != nil {
+			panic(err)
+		}
+		slice[i] = n
+	}
+	return slice
+}
+
 func StringSlice(r io.Reader) []string {
 	scanner := bufio.NewScanner(r)
 	slice := make([]string, 0)
