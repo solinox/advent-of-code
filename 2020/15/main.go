@@ -28,21 +28,19 @@ func part2(start []int) int {
 	return n
 }
 
-func play(start []int, finalTurn int) (int, map[int][2]int) {
-	mem := make(map[int][2]int)
-	for i, v := range start {
-		mem[v] = [2]int{0, i + 1}
+func play(start []int, finalTurn int) (int, map[int]int) {
+	mem := make(map[int]int)
+	for i, v := range start[:len(start)-1] {
+		mem[v] = i + 1
 	}
 	prevN := start[len(start)-1]
 	for turn := len(start) + 1; turn <= finalTurn; turn++ {
-		nums := mem[prevN]
+		last := mem[prevN]
+		mem[prevN] = turn - 1
 		next := 0
-		if nums[0] != 0 {
-			next = nums[1] - nums[0]
+		if last != 0 {
+			next = turn - 1 - last
 		}
-		nums = mem[next]
-		nums[0], nums[1] = nums[1], turn
-		mem[next] = nums
 		prevN = next
 	}
 	return prevN, mem
