@@ -18,6 +18,14 @@ func ReadAll(r io.Reader) []byte {
 	return data
 }
 
+func MustAtoi(s string) int {
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		panic(err)
+	}
+	return n
+}
+
 func IntSlice(r io.Reader) []int {
 	scanner := bufio.NewScanner(r)
 	slice := make([]int, 0)
