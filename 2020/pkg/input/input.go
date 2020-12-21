@@ -77,6 +77,11 @@ func SplitString(r io.Reader, sep string) []string {
 	return strings.Split(data, sep)
 }
 
+func SplitBytes(r io.Reader, sep []byte) [][]byte {
+	data := ReadAll(r)
+	return bytes.Split(data, sep)
+}
+
 func IntMap(r io.Reader) map[int]int {
 	scanner := bufio.NewScanner(r)
 	m := make(map[int]int)
