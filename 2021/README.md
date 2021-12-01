@@ -2,11 +2,11 @@
 
 Usage: `python3 main.py <day>`
 
-Output:
+Example Output:
 ```sh
 Running day 01
---- Part 1 --- (0:00:00.000018)
-3318604
---- Part 2 --- (0:00:00.000191)
-4975039
+--- Part 1 --- (0:00:00.000264)
+1390
+--- Part 2 --- (0:00:00.001135)
+1457
 ```
