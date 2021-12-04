@@ -14,12 +14,14 @@ if __name__ == '__main__':
     day = f'0{sys.argv[1]}'[-2:]
     module = importlib.import_module(day)
     print(f'Running day {day}')
-    with open(f'{day}/input.txt') as f:
+    filename = sys.argv[2] if len(sys.argv) >= 3 else 'input.txt'
+    with open(f'{day}/{filename}') as f:
         parse = getattr(module, 'parse', lambda x: x.read())
-        data = parse(f)
         p1 = getattr(module, 'one', None)
         if p1:
-            run(1, p1, data)
+            f.seek(0, 0)
+            run(1, p1, parse(f))
         p2 = getattr(module, 'two', None)
         if p2:
-            run(2, p2, data)
+            f.seek(0, 0)
+            run(2, p2, parse(f))
