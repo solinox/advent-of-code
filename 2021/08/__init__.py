@@ -1,7 +1,5 @@
-from collections import Counter
-
 def parse(f):
-    return [list(map(lambda x: [Counter(xx) for xx in x.split()], l.split(' | '))) for l in f.readlines()]
+    return [list(map(lambda x: [set(xx) for xx in x.split()], l.split(' | '))) for l in f.readlines()]
 
 def one(data):
     # shortcut, just get number of output words with lengths 2,3,4,7
@@ -22,24 +20,25 @@ def one(data):
 # 8 (len 7) is only len=7
 # 9 (len 6) needs to match 2/2 of 1, 3/3 of 7, 4/4 of 4
 def solve(input, output):
-    one = next(x for x in input if len(x) == 2)
-    four = next(x for x in input if len(x) == 4)
-    seven = next(x for x in input if len(x) == 3)
-    eight = next(x for x in input if len(x) == 7)
-    number_rules = {
-        '0': lambda x: len(x) == 6 and len(x&one) == 2 and len(x&seven) == 3 and len(x&four) == 3,
-        '1': lambda x: x == one,
-        '2': lambda x: len(x) == 5 and len(x&one) == 1 and len(x&seven) == 2 and len(x&four) == 2,
-        '3': lambda x: len(x) == 5 and len(x&one) == 2 and len(x&seven) == 3 and len(x&four) == 3,
-        '4': lambda x: x == four,
-        '5': lambda x: len(x) == 5 and len(x&one) == 1 and len(x&seven) == 2 and len(x&four) == 3,
-        '6': lambda x: len(x) == 6 and len(x&one) == 1 and len(x&seven) == 2 and len(x&four) == 3,
-        '7': lambda x: x == seven,
-        '8': lambda x: x == eight,
-        '9': lambda x: len(x) == 6 and len(x&one) == 2 and len(x&seven) == 3 and len(x&four) == 4,
-    }
-    in_numbers = [next(n for n,f in number_rules.items() if f(x)) for x in input]
-    return int(''.join([in_numbers[input.index(x)] for x in output]))
+    for num in input:
+        match len(num):
+            case 2: one = num
+            case 4: four = num
+            case 3: seven = num
+    n = ''
+    for num in output:
+        match (len(num), len(num&one), len(num&seven), len(num&four)):
+            case 2, _, _, _: n += '1'
+            case 3, _, _, _: n += '7'
+            case 4, _, _, _: n += '4'
+            case 7, _, _, _: n += '8'
+            case 6, 2, 3, 3: n += '0'
+            case 5, 1, 2, 2: n += '2'
+            case 5, 2, 3, 3: n += '3'
+            case 5, 1, 2, 3: n += '5'
+            case 6, 1, 2, 3: n += '6'
+            case 6, 2, 3, 4: n += '9'
+    return int(n)
 
 def two(data):
     return sum([solve(l[0], l[1]) for l in data])
