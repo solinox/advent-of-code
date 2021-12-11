@@ -8,28 +8,33 @@ class Octopus:
 def parse(f):
     return [[Octopus((x, y), int(v)) for x, v in enumerate(l.strip())] for y, l in enumerate(f)]
 
-def neighbors(x, y):
+def neighbors(pos):
+    x, y = pos
     return [(xx, yy) for yy in range(y-1, y+2) for xx in range(x-1, x+2) if xx >=0 and xx < 10 and yy >= 0 and yy < 10 and not (xx == x and yy == y)]
 
-def cascade(octos, curr={}, old={}):
-    if not curr:
+def cascade(octos, flash):
+    if not flash:
         return
-    old.update(curr)
     new = {}
-    for pos in curr.keys():
-        for neighbor_pt in neighbors(pos[0], pos[1]):
+    for pos in flash.keys():
+        for neighbor_pt in neighbors(pos):
             octo = octos[neighbor_pt]
             if octo.energy > 9:
                 continue
             octo.energy += 1
             if octo.energy > 9:
                 new[octo.pos] = octo
-    cascade(octos, new, old)
+    cascade(octos, new)
 
 def step(octos):
+    # increase all octopus energy by 1
     for octo in octos.values():
         octo.energy += 1
+    
+    # recursively cascade through flashing octopus and update neighbors
     cascade(octos, {k:v for k,v in octos.items() if v.energy > 9})
+
+    # count and return number of flashing octopus, reset flashing octupus energy
     count = 0
     for octo in octos.values():
         if octo.energy > 9:
