@@ -7,17 +7,17 @@ def parse(f):
         node_map[r] = node_map.get(r, []) + [l]
     return node_map
 
-def traverse(node_map, current, target, path=[], p2=False, p2_exception=None):
-    travelled = path + [current]
+def traverse(node_map, current, target, path=set(), p2=False):
     if current == target:
         return 1
     n = 0
     for node in node_map[current]:
-        if node.lower() == node and node in travelled:
-            if p2 and p2_exception is None and node not in ['start', 'end']:
-                n += traverse(node_map, node, target, travelled, p2, node)
+        if node.islower() and node in path:
+            if p2 and node != 'start':
+                # sets p2 to False since single exception has been done
+                n += traverse(node_map, node, target, path|{current}, False)
             continue
-        n += traverse(node_map, node, target, travelled, p2, p2_exception)
+        n += traverse(node_map, node, target, path|{current}, p2)
     return n
 
 def one(data):
