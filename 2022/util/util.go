@@ -6,8 +6,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"reflect"
-	"runtime"
 	"strconv"
 	"time"
 
@@ -18,8 +16,7 @@ func RunTimed[T, U any](fn func(T) U, in T) {
 	t0 := time.Now()
 	out := fn(in)
 	dt := time.Since(t0)
-	name := runtime.FuncForPC(reflect.ValueOf(fn).Pointer()).Name()
-	fmt.Printf("%v\n%s in %s\n", out, name, dt)
+	fmt.Printf("%v\n  => in %s\n", out, dt)
 }
 
 func ParseLines[T any](r io.Reader, convert func(line string) T) []T {
