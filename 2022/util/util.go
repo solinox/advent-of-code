@@ -115,3 +115,10 @@ func Sum[T constraints.Ordered](n ...T) T {
 	}
 	return sum
 }
+
+func Reverse[T any](s []T) []T {
+	for i, j := 0, len(s)-1; i < len(s)/2; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
+	}
+	return s
+}
