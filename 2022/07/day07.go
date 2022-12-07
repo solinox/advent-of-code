@@ -83,7 +83,6 @@ func buildTree(in string) FileTree {
 			f := &FileInfo{Dir: false}
 			fmt.Sscanf(line, "%d %s", &f.Size, &f.Name)
 			f.Name = filepath.Join(currentPath, f.Name)
-			t[f.Name] = f
 			currentDir.Files = append(currentDir.Files, f)
 		}
 	}
@@ -93,12 +92,8 @@ func buildTree(in string) FileTree {
 func part1(t FileTree) int {
 	sum := 0
 	t.RandomWalk(func(f *FileInfo) {
-		if !f.Dir {
-			return
-		}
 		dirSum := f.TotalSize()
 		if dirSum <= 100000 {
-			// fmt.Printf("Dir %s has eligible size %d\n", f.Name, dirSum)
 			sum += dirSum
 		}
 	})
@@ -114,9 +109,6 @@ func part2(t FileTree) int {
 	threshold := unusedDiskNeeded - unusedDisk
 	min := totalDisk
 	t.RandomWalk(func(f *FileInfo) {
-		if !f.Dir {
-			return
-		}
 		dirSum := f.TotalSize()
 		if dirSum >= threshold && dirSum < min {
 			min = dirSum
