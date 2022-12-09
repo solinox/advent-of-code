@@ -122,3 +122,14 @@ func Reverse[T any](s []T) []T {
 	}
 	return s
 }
+
+type Number interface {
+	constraints.Signed | constraints.Float
+}
+
+func Abs[T Number](n T) T {
+	if n < 0 {
+		return -n
+	}
+	return n
+}
