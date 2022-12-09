@@ -133,3 +133,27 @@ func Abs[T Number](n T) T {
 	}
 	return n
 }
+
+type Vector struct {
+	Y, X int
+}
+
+func (p Vector) Add(o Vector) Vector {
+	return Vector{Y: p.Y + o.Y, X: p.X + o.X}
+}
+
+func (p Vector) Sub(o Vector) Vector {
+	return Vector{Y: p.Y - o.Y, X: p.X - o.X}
+}
+
+func (p Vector) Unit() Vector {
+	v := Vector{}
+	if p.Y != 0 {
+		v.Y = p.Y / Abs(p.Y)
+	}
+	if p.X != 0 {
+		v.X = p.X / Abs(p.X)
+	}
+	return v
+}
+

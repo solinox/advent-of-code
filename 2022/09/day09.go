@@ -10,28 +10,7 @@ import (
 //go:embed input.txt
 var input string
 
-type Vector struct {
-	Y, X int
-}
-
-func (p Vector) Add(o Vector) Vector {
-	return Vector{Y: p.Y + o.Y, X: p.X + o.X}
-}
-
-func (p Vector) Sub(o Vector) Vector {
-	return Vector{Y: p.Y - o.Y, X: p.X - o.X}
-}
-
-func (p Vector) Unit() Vector {
-	v := Vector{}
-	if p.Y != 0 {
-		v.Y = p.Y / util.Abs(p.Y)
-	}
-	if p.X != 0 {
-		v.X = p.X / util.Abs(p.X)
-	}
-	return v
-}
+type Vector = util.Vector
 
 type Move struct {
 	Dir Vector
@@ -58,32 +37,17 @@ func main() {
 	util.RunTimed(part2, moves)
 }
 
-func part1(moves []Move) int {
-	head, tail := Vector{0, 0}, Vector{0, 0}
-	visited := map[Vector]bool{tail: true}
+func trackTail(knots []Vector, moves []Move) int {
+	visited := map[Vector]bool{knots[len(knots)-1]: true}
 	for _, m := range moves {
 		for n := 0; n < m.N; n++ {
-			head = head.Add(m.Dir)
-			// fmt.Println(head, tail, m)
-			if v := head.Sub(tail); util.Abs(v.Y) > 1 || util.Abs(v.X) > 1 {
-				tail = tail.Add(v.Unit())
-				visited[tail] = true
-				// fmt.Println("moved tail", tail, v, v.Unit())
-			}
-		}
-	}
-	return len(visited)
-}
-
-func part2(moves []Move) int {
-	knots := make([]Vector, 10)
-	visited := map[Vector]bool{Vector{}: true}
-	for _, m := range moves {
-		for n := 0; n < m.N; n++ {
+			// move the head
 			knots[0] = knots[0].Add(m.Dir)
+			// check if following knots need to be moved
 			for i := 1; i < len(knots); i++ {
 				if v := knots[i-1].Sub(knots[i]); util.Abs(v.Y) > 1 || util.Abs(v.X) > 1 {
 					knots[i] = knots[i].Add(v.Unit())
+					// track the tail knot
 					if i == len(knots)-1 {
 						visited[knots[len(knots)-1]] = true
 					}
@@ -92,4 +56,12 @@ func part2(moves []Move) int {
 		}
 	}
 	return len(visited)
+}
+
+func part1(moves []Move) int {
+	return trackTail(make([]Vector, 2), moves)
+}
+
+func part2(moves []Move) int {
+	return trackTail(make([]Vector, 10), moves)
 }
