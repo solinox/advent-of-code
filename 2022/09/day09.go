@@ -51,6 +51,8 @@ func trackTail(knots []Vector, moves []Move) int {
 					if i == len(knots)-1 {
 						visited[knots[len(knots)-1]] = true
 					}
+				} else {
+					break
 				}
 			}
 		}
