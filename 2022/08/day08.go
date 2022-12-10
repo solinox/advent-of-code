@@ -16,64 +16,55 @@ func main() {
 	util.RunTimed(part2, grid)
 }
 
-func isVisible(grid [][]byte, i, j int) bool {
-	if i == 0 || i == len(grid)-1 || j == 0 || j == len(grid[i])-1 {
-		// edge of forest
-		return true
-	}
+func visibleDirections(grid [][]byte, i, j int, includeEqual bool) (up, down, left, right int) {
 	v := grid[i][j]
-	// check row
-	if util.Max(grid[i][:j]...) < v || util.Max(grid[i][j+1:]...) < v {
-		return true
-	}
-	// check column
-	fromTop, fromBottom := true, true
-	for r := 0; r < i; r++ {
-		if grid[r][j] >= v {
-			fromTop = false
-			break
-		}
-	}
-	if fromTop {
-		return true
-	}
-	for r := i + 1; r < len(grid); r++ {
-		if grid[r][j] >= v {
-			fromBottom = false
-			break
-		}
-	}
-	return fromBottom
-}
-
-func scenicScore(grid [][]byte, i, j int) int {
-	v := grid[i][j]
-	left, right, up, down := 0, 0, 0, 0
 	for n := i - 1; n >= 0; n-- {
 		up++
 		if grid[n][j] >= v {
+			if !includeEqual {
+				up--
+			}
 			break
 		}
 	}
 	for n := i + 1; n < len(grid); n++ {
 		down++
 		if grid[n][j] >= v {
+			if !includeEqual {
+				down--
+			}
 			break
 		}
 	}
 	for n := j - 1; n >= 0; n-- {
 		left++
 		if grid[i][n] >= v {
+			if !includeEqual {
+				left--
+			}
 			break
 		}
 	}
 	for n := j + 1; n < len(grid[i]); n++ {
 		right++
 		if grid[i][n] >= v {
+			if !includeEqual {
+				right--
+			}
 			break
 		}
 	}
-	return left * right * up * down
+	return
+}
+
+func isVisible(grid [][]byte, i, j int) bool {
+	up, down, left, right := visibleDirections(grid, i, j, false)
+	return up == i || down == len(grid)-i-1 || left == j || right == len(grid[i])-j-1
+}
+
+func scenicScore(grid [][]byte, i, j int) int {
+	up, down, left, right := visibleDirections(grid, i, j, true)
+	return up * down * left * right
 }
 
 func part1(grid [][]byte) int {
