@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/exp/constraints"
@@ -45,6 +46,11 @@ func ParseSections[T any](r io.Reader, convert func(line string) T) [][]T {
 		ret = append(ret, section)
 	}
 	return ret
+}
+
+func ParseDelimited[T any](line, delim string, convert func(s string) T) []T {
+	fields := strings.Split(line, delim)
+	return SliceFrom(fields, convert)
 }
 
 func ParseInt(s string) int {
@@ -156,4 +162,3 @@ func (p Vector) Unit() Vector {
 	}
 	return v
 }
-
