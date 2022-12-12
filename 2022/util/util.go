@@ -162,3 +162,7 @@ func (p Vector) Unit() Vector {
 	}
 	return v
 }
+
+func (p Vector) Dist(o Vector) int {
+	return Abs(p.Y-o.Y) + Abs(p.X-o.X)
+}
