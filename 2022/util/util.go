@@ -25,6 +25,9 @@ func ParseLines[T any](r io.Reader, convert func(line string) T) []T {
 	ret := make([]T, 0)
 	for s.Scan() {
 		l := s.Text()
+		if l == "" {
+			continue
+		}
 		ret = append(ret, convert(l))
 	}
 	return ret
@@ -39,6 +42,7 @@ func ParseSections[T any](r io.Reader, convert func(line string) T) [][]T {
 		if l == "" {
 			ret = append(ret, section)
 			section = make([]T, 0)
+			continue
 		}
 		section = append(section, convert(l))
 	}
