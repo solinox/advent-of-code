@@ -33,7 +33,7 @@ func part2(packets []any) int {
 	p1, p2 := "[[2]]", "[[6]]"
 	packets = append(packets, newPacket(p1), newPacket(p2))
 
-	sort.Slice(packets, func(i, j int) bool { return packetCmp(packets[i], packets[j]) <= 0 })
+	sort.Slice(packets, func(i, j int) bool { return packetCmp(packets[i], packets[j]) < 0 })
 
 	product := 1
 	for i := range packets {
