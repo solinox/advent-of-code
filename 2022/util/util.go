@@ -182,3 +182,38 @@ func (p Vector) Unit() Vector {
 func (p Vector) Dist(o Vector) int {
 	return Abs(p.Y-o.Y) + Abs(p.X-o.X)
 }
+
+type Range struct {
+	Min, Max int
+}
+
+func (r Range) Dist() int {
+	d := Abs(r.Max-r.Min) + 1
+	if r.Max > 0 && r.Min < 0 {
+		d--
+	}
+	return d
+}
+
+func MergeRanges(rs []Range) []Range {
+	anyMerged := true
+	for anyMerged {
+		anyMerged = false
+		for i := len(rs) - 1; i >= 1; i-- {
+			for j := i - 1; j >= 0; j-- {
+				if rs[i].Max < rs[j].Min || rs[i].Min > rs[i].Max || rs[j].Max < rs[i].Min || rs[j].Min > rs[i].Max {
+					continue
+				}
+				anyMerged = true
+				rs[j] = Range{Min: Min(rs[i].Min, rs[j].Min), Max: Max(rs[i].Max, rs[j].Max)}
+				if i < len(rs)-1 {
+					rs = append(rs[:i], rs[i+1:]...)
+				} else {
+					rs = rs[:i]
+				}
+				break
+			}
+		}
+	}
+	return rs
+}
