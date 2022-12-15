@@ -33,6 +33,18 @@ func ParseLines[T any](r io.Reader, convert func(line string) T) []T {
 	return ret
 }
 
+func ParseLinesReduce[T any](r io.Reader, fn func(agg T, line string) T, val T) T {
+	s := bufio.NewScanner(r)
+	for s.Scan() {
+		l := s.Text()
+		if l == "" {
+			continue
+		}
+		val = fn(val, l)
+	}
+	return val
+}
+
 func ParseSections[T any](r io.Reader, convert func(line string) T) [][]T {
 	s := bufio.NewScanner(r)
 	ret := make([][]T, 0)
