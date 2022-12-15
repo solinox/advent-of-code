@@ -36,6 +36,10 @@ func part1(sensors []Sensor) int {
 	return coverage
 }
 
+// current brute-force iterates over each y, finding the first row which is not covered from 0-4000000
+// current takes a couple seconds to run
+// optimization idea: get points just outside each sensor's perimeter that are within the bounds
+// and check those points until one of them is not covered by any sensor
 func part2(sensors []Sensor) int {
 	const tuningMult = 4000000
 	bounds := Range{Min: 0, Max: 4000000}
