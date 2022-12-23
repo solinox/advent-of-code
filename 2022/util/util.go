@@ -217,3 +217,42 @@ func MergeRanges(rs []Range) []Range {
 	}
 	return rs
 }
+
+// All returns all combinations for a given string array.
+// This is essentially a powerset of the given set except that the empty set is disregarded.
+// ABCDE combinations
+// A, AB, AC, AD, AE, ABC, ABD, ABE, ACD, ACE, ADE, ABCD, ACDE, ABCDE
+// B, BC, BD, BE, BCD, BCE, BCDE
+// C, CD, CE, CDE
+// D, DE
+// E
+func AllCombinations[T any](set []T) (subsets [][]T) {
+	length := uint(len(set))
+
+	// Go through all possible combinations of objects
+	// from 1 (only first object in subset) to 2^length (all objects in subset)
+	for subsetBits := 1; subsetBits < (1 << length); subsetBits++ {
+		var subset []T
+
+		for object := uint(0); object < length; object++ {
+			// checks if object is contained in subset
+			// by checking if bit 'object' is set in subsetBits
+			if (subsetBits>>object)&1 == 1 {
+				// add object to subset
+				subset = append(subset, set[object])
+			}
+		}
+		// add subset to subsets
+		subsets = append(subsets, subset)
+	}
+	return subsets
+}
+
+func Contains[T comparable](s []T, e T) bool {
+	for _, v := range s {
+		if v == e {
+			return true
+		}
+	}
+	return false
+}
