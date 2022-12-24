@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	_ "embed"
 
 	"github.com/solinox/advent-of-code/2022/util"
@@ -49,42 +50,67 @@ var rocks = []rock{
 
 func main() {
 	util.RunTimed(part1, input)
-	// util.RunTimed(part2, input)
+	util.RunTimed(part2, input)
 }
 
+const nRows = 70
+
+var empty = bytes.Repeat([]byte{'.'}, 7*nRows)
+
 func part1(jets []byte) int {
-	dropped, h, j := make(map[Vector]bool), 0, 0
+	// return dropRocksN(rocks, jets, 2022) also works, but is a bit slower
+	// due to the time spent populating the cache, moreso than the benefit for a small n (2022)
+	rs, h, j := make([]byte, 7*nRows), 0, 0
+	copy(rs, empty)
 	for i := 0; i < 2022; i++ {
-		dropped, h, j = drop(rocks[i%5], dropped, jets, h, j)
+		rs, h, j = drop(rocks[i%5], rs, jets, h, j)
 	}
 	return h
 }
 
 func part2(jets []byte) int {
-	dropped, h, j := make(map[Vector]bool), 0, 0
-	// this doesn't work (takes too long, OOMKilled)
-	// but there must be a pattern to the rocks falling that lets us increase the height dh for every n rocks
-	for i := 0; i < 1_000_000_000_000; i++ {
-		dropped, h, j = drop(rocks[i%5], dropped, jets, h, j)
+	return dropRocksN(rocks, jets, 1_000_000_000_000)
+}
+
+func dropRocksN(rocks []rock, jets []byte, n int) int {
+	rs, h, j := make([]byte, 7*nRows), 0, 0
+	copy(rs, empty)
+	type key struct {
+		rs    string
+		ro, j int
+	}
+	cache := make(map[key][2]int)
+	for i := 0; i < n; i++ {
+		k := key{string(rs), i % 5, j}
+		if a, ok := cache[k]; ok {
+			di, dh := i-a[0], h-a[1]
+			for ; i+di < n; i += di {
+				h += dh
+			}
+		} else {
+			cache[k] = [2]int{i, h}
+		}
+		rs, h, j = drop(rocks[i%5], rs, jets, h, j)
 	}
 	return h
 }
 
-func okMove(rock rock, dropped map[Vector]bool, x, y int) bool {
+func okMove(rock rock, rocks []byte, x, y, h int) bool {
 	if x < 0 || x+rock.w > 7 || y < 0 {
 		return false
 	}
+	if y > h {
+		return true
+	}
 	for _, v := range rock.v {
-		v.X += x
-		v.Y += y
-		if dropped[v] {
+		if v.Y+y <= h && rocks[(h-y-v.Y)*7+x+v.X] == '#' {
 			return false
 		}
 	}
 	return true
 }
 
-func drop(rock rock, dropped map[Vector]bool, jets []byte, h, j int) (map[Vector]bool, int, int) {
+func drop(rock rock, rs []byte, jets []byte, h, j int) ([]byte, int, int) {
 	x, y := 2, h+3
 	for {
 		dir := jets[j]
@@ -93,24 +119,23 @@ func drop(rock rock, dropped map[Vector]bool, jets []byte, h, j int) (map[Vector
 		if dir == '<' {
 			dx = -1
 		}
-		if nx := x + dx; okMove(rock, dropped, nx, y) {
+		if nx := x + dx; okMove(rock, rs, nx, y, h) {
 			x = nx
 		}
 		dy := -1
-		if ny := y + dy; okMove(rock, dropped, x, ny) {
+		if ny := y + dy; okMove(rock, rs, x, ny, h) {
 			y = ny
 		} else {
-			// at rest
 			break
 		}
 	}
+	if dh := y + rock.h - h; dh > 0 {
+		copy(rs[dh*7:], rs)
+		copy(rs[:dh*7], empty)
+		h += dh
+	}
 	for _, v := range rock.v {
-		v.X += x
-		v.Y += y
-		dropped[v] = true
+		rs[(h-y-v.Y)*7+x+v.X] = '#'
 	}
-	if nh := y + rock.h; nh > h {
-		h = nh
-	}
-	return dropped, h, j
+	return rs, h, j
 }
