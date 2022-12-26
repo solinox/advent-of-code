@@ -183,6 +183,14 @@ func (p Vector) Dist(o Vector) int {
 	return Abs(p.Y-o.Y) + Abs(p.X-o.X)
 }
 
+type Vector3 struct {
+	Z, Y, X int
+}
+
+func (p Vector3) Add(o Vector3) Vector3 {
+	return Vector3{Z: p.Z + o.Z, Y: p.Y + o.Y, X: p.X + o.X}
+}
+
 type Range struct {
 	Min, Max int
 }
