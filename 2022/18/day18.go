@@ -43,6 +43,7 @@ func part2(cubes map[Vector]bool) int {
 	surfaceArea := 0
 	ranges := make(map[Vector]Range)
 	exteriors := make(map[Vector]bool)
+	interiors := make(map[Vector]bool)
 	for c := range cubes {
 		xy, yz, xz := Vector{X: c.X, Y: c.Y}, Vector{Y: c.Y, Z: c.Z}, Vector{X: c.X, Z: c.Z}
 		rxy, ok := ranges[xy]
@@ -70,17 +71,19 @@ func part2(cubes map[Vector]bool) int {
 	}
 	for c := range cubes {
 		for _, d := range dirs {
-			if vd := c.Add(d); isExterior(cubes, exteriors, make(map[Vector]bool), ranges, vd) {
+			if vd := c.Add(d); isExterior(cubes, exteriors, interiors, make(map[Vector]bool), ranges, vd) {
 				exteriors[vd] = true
 				surfaceArea++
+			} else {
+				interiors[vd] = true
 			}
 		}
 	}
 	return surfaceArea
 }
 
-func isExterior(cubes, exteriors, checked map[Vector]bool, ranges map[Vector]Range, v Vector) bool {
-	if cubes[v] || checked[v] {
+func isExterior(cubes, exteriors, interiors, checked map[Vector]bool, ranges map[Vector]Range, v Vector) bool {
+	if cubes[v] || checked[v] || interiors[v] {
 		return false
 	}
 	if exteriors[v] {
@@ -98,7 +101,7 @@ func isExterior(cubes, exteriors, checked map[Vector]bool, ranges map[Vector]Ran
 	}
 	checked[v] = true
 	for _, d := range dirs {
-		if vd := v.Add(d); isExterior(cubes, exteriors, checked, ranges, vd) {
+		if vd := v.Add(d); isExterior(cubes, exteriors, interiors, checked, ranges, vd) {
 			exteriors[vd] = true
 			return true
 		}
