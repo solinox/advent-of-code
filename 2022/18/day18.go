@@ -14,26 +14,24 @@ var input string
 type Vector = util.Vector3
 type Range = util.Range
 
+var dirs = []Vector{{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}}
+
 func main() {
-	cubes := util.ParseLines(strings.NewReader(input), func(s string) Vector {
+	cubes := util.ParseLinesReduce(strings.NewReader(input), func(cubes map[Vector]bool, s string) map[Vector]bool {
 		var v Vector
 		fmt.Sscanf(s, "%d,%d,%d", &v.X, &v.Y, &v.Z)
-		return v
-	})
+		cubes[v] = true
+		return cubes
+	}, make(map[Vector]bool))
 	util.RunTimed(part1, cubes)
 	util.RunTimed(part2, cubes)
 }
 
-func part1(cubes []Vector) int {
+func part1(cubes map[Vector]bool) int {
 	surfaceArea := 0
-	cubeMap := make(map[Vector]bool)
-	for _, c := range cubes {
-		cubeMap[c] = true
-	}
-	dirs := []Vector{{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}}
-	for c := range cubeMap {
+	for c := range cubes {
 		for _, d := range dirs {
-			if !cubeMap[c.Add(d)] {
+			if !cubes[c.Add(d)] {
 				surfaceArea++
 			}
 		}
@@ -41,13 +39,11 @@ func part1(cubes []Vector) int {
 	return surfaceArea
 }
 
-func part2(cubes []Vector) int {
+func part2(cubes map[Vector]bool) int {
 	surfaceArea := 0
-	cubeMap := make(map[Vector]bool)
 	ranges := make(map[Vector]Range)
 	exteriors := make(map[Vector]bool)
-	for _, c := range cubes {
-		cubeMap[c] = true
+	for c := range cubes {
 		xy, yz, xz := Vector{X: c.X, Y: c.Y}, Vector{Y: c.Y, Z: c.Z}, Vector{X: c.X, Z: c.Z}
 		rxy, ok := ranges[xy]
 		if !ok || c.Z < rxy.Min {
@@ -72,10 +68,9 @@ func part2(cubes []Vector) int {
 		}
 		ranges[xy], ranges[yz], ranges[xz] = rxy, ryz, rxz
 	}
-	dirs := []Vector{{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}}
-	for c := range cubeMap {
+	for c := range cubes {
 		for _, d := range dirs {
-			if vd := c.Add(d); isExterior(cubeMap, ranges, vd, exteriors, make(map[Vector]bool)) {
+			if vd := c.Add(d); isExterior(cubes, exteriors, make(map[Vector]bool), ranges, vd) {
 				exteriors[vd] = true
 				surfaceArea++
 			}
@@ -84,8 +79,8 @@ func part2(cubes []Vector) int {
 	return surfaceArea
 }
 
-func isExterior(cubeMap map[Vector]bool, ranges map[Vector]Range, v Vector, exteriors map[Vector]bool, checked map[Vector]bool) bool {
-	if cubeMap[v] || checked[v] {
+func isExterior(cubes, exteriors, checked map[Vector]bool, ranges map[Vector]Range, v Vector) bool {
+	if cubes[v] || checked[v] {
 		return false
 	}
 	if exteriors[v] {
@@ -102,9 +97,8 @@ func isExterior(cubeMap map[Vector]bool, ranges map[Vector]Range, v Vector, exte
 		return true
 	}
 	checked[v] = true
-	dirs := []Vector{{-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}}
 	for _, d := range dirs {
-		if vd := v.Add(d); isExterior(cubeMap, ranges, vd, exteriors, checked) {
+		if vd := v.Add(d); isExterior(cubes, exteriors, checked, ranges, vd) {
 			exteriors[vd] = true
 			return true
 		}
