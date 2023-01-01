@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/ring"
 	_ "embed"
 	"strings"
 
@@ -15,6 +16,8 @@ func main() {
 	in := util.ParseLines(strings.NewReader(input), util.ParseInt)
 	util.RunTimed(part1, in)
 	util.RunTimed(part2, in)
+	// util.RunTimed(part1Ring, in)
+	// util.RunTimed(part2Ring, in)
 }
 
 func part1(in []int) int {
@@ -31,9 +34,24 @@ func part2(in []int) int {
 	return groveCoords(out)
 }
 
+func part1Ring(in []int) int {
+	out := decryptRing(in, 1)
+	return groveCoordsRing(out)
+}
+
+func part2Ring(in []int) int {
+	keyedIn := make([]int, len(in))
+	for i := range in {
+		keyedIn[i] = in[i] * 811589153
+	}
+	out := decryptRing(keyedIn, 10)
+	return groveCoordsRing(out)
+}
+
 /*
 O(n^2) solution by storing a list of the indices of each value
-but for n=5000 it still runs in <1s thankfully.
+but for n=5000 it still runs in <1s thankfully. Much faster than
+a solution using *ring.Ring, because the r.Move(n) takes a looong time for large n
 
 Initial arrangement:         Indices (ix):
 1, 2, -3, 3, -2, 0, 4          [0 1 2 3 4 5 6]
@@ -89,6 +107,43 @@ func decrypt(in []int, n int) []int {
 		}
 	}
 	return reconstruct(in, ix)
+}
+
+// technically works but is too slow due to *ring.Ring.Move(), even the test input
+// takes over a minute
+func decryptRing(in []int, n int) *ring.Ring {
+	k := len(in)
+	r := ring.New(k)
+	type ringNode struct {
+		value int
+		r     *ring.Ring
+	}
+	nodes := make([]ringNode, k)
+	for i := range in {
+		r.Value = in[i] % k
+		nodes[i] = ringNode{value: in[i], r: r}
+		r = r.Next()
+	}
+	for m := 0; m < n; m++ {
+		for i := range nodes {
+			if nodes[i].value == 0 {
+				continue
+			}
+			r := nodes[i].r.Prev()
+			u := r.Unlink(1)
+			r = r.Move(nodes[i].value)
+			r.Link(u)
+			nodes[i].r = r.Next()
+		}
+	}
+	return r
+}
+
+func groveCoordsRing(r *ring.Ring) int {
+	for r.Value != 0 {
+		r = r.Next()
+	}
+	return r.Move(1000).Value.(int) + r.Move(2000).Value.(int) + r.Move(3000).Value.(int)
 }
 
 func groveCoords(out []int) int {
